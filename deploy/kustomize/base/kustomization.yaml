@@ -14,5 +14,5 @@ labels:
     component: elasticsearch-compat
 
 images:
-- name: ghcr.io/your-org/es-meili-growi-bridge
+- name: ghcr.io/yude/es-meili-growi-bridge
   newTag: latest

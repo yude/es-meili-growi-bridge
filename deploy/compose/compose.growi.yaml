@@ -7,7 +7,7 @@ services:
       - mongo_data:/data/db
 
   bridge:
-    image: ${BRIDGE_IMAGE:-ghcr.io/your-org/es-meili-growi-bridge:latest}
+    image: ${BRIDGE_IMAGE:-ghcr.io/yude/es-meili-growi-bridge:latest}
 
   growi:
     image: growi/growi:latest

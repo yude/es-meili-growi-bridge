@@ -15,7 +15,7 @@ services:
       retries: 5
 
   bridge:
-    image: ${BRIDGE_IMAGE:-ghcr.io/your-org/es-meili-growi-bridge:latest}
+    image: ${BRIDGE_IMAGE:-ghcr.io/yude/es-meili-growi-bridge:latest}
     ports:
       - "9200:9200"
     environment:

@@ -105,16 +105,6 @@ export LISTEN_ADDR=:9200
 ./es-meili-growi-bridge
 ```
 
-#### 初回セットアップ
-
-このリポジトリ内の `your-org` プレースホルダを実際の GitHub Organization/ユーザー名に置き換えてください。
-
-```bash
-# 例: GitHub ユーザー名が "my-org" の場合
-find . -type f -name '*.yaml' -o -name '*.yml' -o -name '*.md' | \
-  xargs sed -i 's/your-org/my-org/g'
-```
-
 ---
 
 ## 環境変数
@@ -145,25 +135,6 @@ find . -type f -name '*.yaml' -o -name '*.yml' -o -name '*.md' | \
 | `latest` | `main` ブランチ |
 | `<short-sha>` | 各コミット (例: `a1b2c3d`) |
 | `<branch-name>` | ブランチ名 |
-
-### Kustomize でイメージを差し替える
-
-CI でデプロイする際は以下を実行します:
-
-```bash
-cd deploy/kustomize/overlays/prod
-kustomize edit set image \
-  ghcr.io/your-org/es-meili-growi-bridge=ghcr.io/YOUR_ORG/es-meili-growi-bridge:${{ github.sha }}
-kustomize build | kubectl apply -f -
-```
-
-### Docker Compose でレジストリイメージを使う
-
-環境変数 `BRIDGE_IMAGE` でイメージを指定します:
-
-```bash
-BRIDGE_IMAGE=ghcr.io/YOUR_ORG/es-meili-growi-bridge:latest docker compose up -d
-```
 
 ---
 
