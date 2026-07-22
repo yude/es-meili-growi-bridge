@@ -105,7 +105,19 @@ export LISTEN_ADDR=:9200
 ./es-meili-growi-bridge
 ```
 
-### 環境変数
+#### 初回セットアップ
+
+このリポジトリ内の `your-org` プレースホルダを実際の GitHub Organization/ユーザー名に置き換えてください。
+
+```bash
+# 例: GitHub ユーザー名が "my-org" の場合
+find . -type f -name '*.yaml' -o -name '*.yml' -o -name '*.md' | \
+  xargs sed -i 's/your-org/my-org/g'
+```
+
+---
+
+## 環境変数
 
 | 変数 | デフォルト | 説明 |
 |---|---|---|
@@ -113,6 +125,47 @@ export LISTEN_ADDR=:9200
 | `MEILISEARCH_API_KEY` | `""` | Meilisearch API Key |
 | `LISTEN_ADDR` | `:9200` | サーバの listen アドレス |
 | `LOG_LEVEL` | `info` | ログレベル |
+
+## CI/CD (GitHub Actions)
+
+プッシュまたは PR 時に GitHub Actions が Docker イメージを自動ビルドします。
+
+`.github/workflows/docker-build.yml` の仕様:
+
+| トリガー | 動作 |
+|---|---|
+| `main` ブランチへの push | ビルド + `ghcr.io` へ push (`latest` + git SHA タグ) |
+| PR | ビルドのみ (cache 利用) |
+| workflow_dispatch | 手動実行 |
+
+### イメージタグ戦略
+
+| タグ | 対象 |
+|---|---|
+| `latest` | `main` ブランチ |
+| `<short-sha>` | 各コミット (例: `a1b2c3d`) |
+| `<branch-name>` | ブランチ名 |
+
+### Kustomize でイメージを差し替える
+
+CI でデプロイする際は以下を実行します:
+
+```bash
+cd deploy/kustomize/overlays/prod
+kustomize edit set image \
+  ghcr.io/your-org/es-meili-growi-bridge=ghcr.io/YOUR_ORG/es-meili-growi-bridge:${{ github.sha }}
+kustomize build | kubectl apply -f -
+```
+
+### Docker Compose でレジストリイメージを使う
+
+環境変数 `BRIDGE_IMAGE` でイメージを指定します:
+
+```bash
+BRIDGE_IMAGE=ghcr.io/YOUR_ORG/es-meili-growi-bridge:latest docker compose up -d
+```
+
+---
 
 ## GROWI との接続方法
 

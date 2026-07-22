@@ -6,6 +6,9 @@ services:
     volumes:
       - mongo_data:/data/db
 
+  bridge:
+    image: ${BRIDGE_IMAGE:-ghcr.io/your-org/es-meili-growi-bridge:latest}
+
   growi:
     image: growi/growi:latest
     ports:

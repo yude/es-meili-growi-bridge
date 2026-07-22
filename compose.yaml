@@ -19,6 +19,7 @@ services:
     build:
       context: .
       dockerfile: deploy/compose/Dockerfile
+    image: ${BRIDGE_IMAGE:-ghcr.io/your-org/es-meili-growi-bridge:latest}
     ports:
       - "9200:9200"
     environment:

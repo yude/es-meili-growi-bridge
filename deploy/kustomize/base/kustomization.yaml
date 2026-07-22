@@ -12,3 +12,7 @@ labels:
   pairs:
     app: es-meili-growi-bridge
     component: elasticsearch-compat
+
+images:
+- name: ghcr.io/your-org/es-meili-growi-bridge
+  newTag: latest
