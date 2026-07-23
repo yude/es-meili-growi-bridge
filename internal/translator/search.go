@@ -217,23 +217,24 @@ func (t *searchTranslator) parseFilterClauses(filters []interface{}) []string {
 }
 
 func (t *searchTranslator) parseFilterNode(node map[string]interface{}) []string {
-	// Handle prefix query: { "prefix": { "field": "value" } }
+	// Handle prefix query: { "prefix": { "field": "value" } } or { "prefix": { "field": { "value": "..." } } }
 	if prefix, ok := node["prefix"].(map[string]interface{}); ok {
 		for field, val := range prefix {
 			field = stripFieldSuffix(field)
-			valStr := fmt.Sprintf("%v", val)
+			valStr := extractValue(val)
 			return []string{fmt.Sprintf(`%s STARTS WITH "%s"`, field, escapeFilterValue(valStr))}
 		}
 	}
 
-	// Handle term query: { "term": { "field": "value" } }
+	// Handle term query: { "term": { "field": "value" } } or { "term": { "field": { "value": "..." } } }
 	if term, ok := node["term"].(map[string]interface{}); ok {
 		for field, val := range term {
 			if field == "grant" {
-				return []string{fmt.Sprintf("grant = %v", val)}
+				valStr := extractValue(val)
+				return []string{fmt.Sprintf("grant = %s", valStr)}
 			}
 			field = stripFieldSuffix(field)
-			valStr := fmt.Sprintf("%v", val)
+			valStr := extractValue(val)
 			return []string{fmt.Sprintf(`%s = "%s"`, field, escapeFilterValue(valStr))}
 		}
 	}
@@ -346,6 +347,20 @@ func stripFieldSuffix(field string) string {
 		return field[:len(field)-3]
 	}
 	return field
+}
+
+func extractValue(v interface{}) string {
+	switch val := v.(type) {
+	case string:
+		return val
+	case map[string]interface{}:
+		if s, ok := val["value"].(string); ok {
+			return s
+		}
+		return fmt.Sprintf("%v", v)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
 
 func escapeFilterValue(s string) string {
