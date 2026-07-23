@@ -8,7 +8,6 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: es-meili-growi-bridge
   REGISTRY: ghcr.io
 
 jobs:
@@ -35,7 +34,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
             type=ref,event=branch
             type=sha,prefix=,suffix=,format=short
