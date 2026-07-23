@@ -57,7 +57,12 @@ func (h *Handlers) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{index}/_validate/query", h.ValidateQuery)
 }
 
+func setProductHeader(w http.ResponseWriter) {
+	w.Header().Set("X-Elastic-Product", "Elasticsearch")
+}
+
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
+	setProductHeader(w)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(data); err != nil {

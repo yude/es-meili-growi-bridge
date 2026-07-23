@@ -13,10 +13,12 @@ func (h *Handlers) IndexExists(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.meiliClient.GetIndex(index)
 	if err != nil {
+		setProductHeader(w)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
+	setProductHeader(w)
 	w.WriteHeader(http.StatusOK)
 }
 
