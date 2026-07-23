@@ -17,6 +17,19 @@ internal/
 ├── config/              # 設定 (環境変数)
 ├── server/              # HTTP サーバ (graceful shutdown)
 ├── handler/             # HTTP ハンドラ + ルーティング
+│   ├── handler.go       # ルート登録 + alias store 初期化
+│   ├── alias_store.go   # 仮想エイリアス (Meilisearch から復元)
+│   ├── search.go        # 検索ハンドラ
+│   ├── bulk.go          # バルク操作
+│   ├── index.go         # インデックス作成/削除
+│   ├── alias.go         # エイリアス操作
+│   ├── stats.go         # 統計情報
+│   ├── cat.go           # _cat API
+│   ├── cluster.go       # クラスタヘルス
+│   ├── nodes.go         # ノード情報
+│   ├── reindex.go       # リインデックス (no-op)
+│   ├── validate.go      # クエリバリデーション
+│   └── root.go          # ルート/バージョン
 ├── elasticsearch/       # ES 互換リクエスト/レスポンス構造体
 ├── meilisearch/         # Meilisearch REST API クライアント
 └── translator/          # ES DSL ↔ Meilisearch 変換 (最重要)
@@ -57,6 +70,8 @@ Request (JSON)
 | `GET /_cat/indices` | ✅ | Meilisearch の index 一覧を cat 形式で返却 |
 | `GET /_cat/aliases` | ✅ | 仮想エイリアス一覧を cat 形式で返却 |
 
+**共通**: 全レスポンスに `X-Elastic-Product: Elasticsearch` ヘッダーを付与（GROWI の ES9 クライアントが製品チェックで要求）。
+
 ### ES Query DSL 変換マッピング
 
 | ES Query DSL | Meilisearch | 方針 |
@@ -69,9 +84,11 @@ Request (JSON)
 | `bool.filter[].terms` | `field IN [values]` | filter 式に変換 |
 | `bool.filter[].bool.should` | `OR` 結合 | filter 式に変換 |
 | `bool.filter[].bool.must` | `AND` 結合 | filter 式に変換 |
+| `bool.filter[].bool.must_not` | `NOT (...)` | filter 式に変換 |
+| `bool.filter[].bool` (ネスト) | 再帰変換 | must/should/must_not を再帰的に処理 |
 | `function_score` | 無視 | デフォルトスコアを使用 |
 | `sort._score` | デフォルト | Meilisearch デフォルトの関連順 |
-| `sort.field` | `field:asc/desc` | そのまま変換 |
+| `sort.field` | `field:asc/desc` | そのまま変換（配列・オブジェクト両形式対応） |
 | `highlight` | `attributesToHighlight` | pre/post_tags を維持 |
 
 ## ビルド方法
@@ -125,7 +142,7 @@ export LISTEN_ADDR=:9200
 
 | トリガー | 動作 |
 |---|---|
-| `main` ブランチへの push | ビルド + `ghcr.io` へ push (`latest` + git SHA タグ) |
+| `master` ブランチへの push | ビルド + `ghcr.io` へ push (`latest` + git SHA タグ) |
 | PR | ビルドのみ (cache 利用) |
 | workflow_dispatch | 手動実行 |
 
@@ -133,7 +150,7 @@ export LISTEN_ADDR=:9200
 
 | タグ | 対象 |
 |---|---|
-| `latest` | `main` ブランチ |
+| `latest` | `master` ブランチ |
 | `<short-sha>` | 各コミット (例: `a1b2c3d`) |
 | `<branch-name>` | ブランチ名 |
 
@@ -157,6 +174,8 @@ ELASTICSEARCH_URI=http://localhost:9200/growi
 
 ## 注意事項
 
-- Meilisearch には Elasticsearch のエイリアス機能が存在しないため、エイリアスはサーバのメモリ上で仮想的に管理されます。再起動時に GROWI がエイリアスを再作成するため、データの損失は発生しません。
+- Meilisearch には Elasticsearch のエイリアス機能が存在しないため、エイリアスはサーバのメモリ上で仮想的に管理されます。起動時に既存の Meilisearch インデックスから `{index}-alias` マッピングを復元するため、再起動後もエイリアスが維持されます。
 - `field_value_factor` によるブーストスコアリングは Meilisearch に相当機能がないため無視されます。
 - Reindex API は即座に成功を返します。実際のデータ移行は GROWI の `addAllPages` で MongoDB から直接行われます。
+- Meilisearch の `attributesToHighlight` 設定時、primary key (`id`) が `attributesToRetrieve` から除外されるため、常に `id` を明示的に含めています。
+- GROWI の `ELASTICSEARCH_URI` にはインデックス名をパスsuffixとして含める必要があります（例: `http://bridge:9200/growi`）。ES9 クライアントの `getConnectionInfo()` がこの形式で URI をパースするためです。
