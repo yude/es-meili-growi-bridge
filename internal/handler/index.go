@@ -9,7 +9,7 @@ import (
 )
 
 func (h *Handlers) IndexExists(w http.ResponseWriter, r *http.Request) {
-	index := r.PathValue("index")
+	index := meiliIndex(h, r.PathValue("index"))
 
 	_, err := h.meiliClient.GetIndex(index)
 	if err != nil {
@@ -21,7 +21,8 @@ func (h *Handlers) IndexExists(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) CreateIndex(w http.ResponseWriter, r *http.Request) {
-	index := r.PathValue("index")
+	esIndex := r.PathValue("index")
+	index := meiliIndex(h, esIndex)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -46,7 +47,7 @@ func (h *Handlers) CreateIndex(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		h.indexMappingStore[index] = req.Mappings
+		h.indexMappingStore[esIndex] = req.Mappings
 	}
 
 	_, err = h.meiliClient.CreateIndex(index, primaryKey)
@@ -59,20 +60,18 @@ func (h *Handlers) CreateIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.aliasStore.PutAlias(index, index+"-alias")
+	h.aliasStore.PutAlias(esIndex, esIndex+"-alias")
 
-	resp := elasticsearch.NewIndexCreateResponse(index)
+	resp := elasticsearch.NewIndexCreateResponse(esIndex)
 	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *Handlers) DeleteIndex(w http.ResponseWriter, r *http.Request) {
-	index := r.PathValue("index")
+	index := meiliIndex(h, r.PathValue("index"))
 
 	if err := h.meiliClient.DeleteIndex(index); err != nil {
-		writeError(w, elasticsearch.NewNotFound(index))
-		return
+		// index might not exist — still return ack to GROWI
 	}
 
-	resp := elasticsearch.NewIndexDeleteResponse()
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(w, http.StatusOK, elasticsearch.NewIndexDeleteResponse())
 }

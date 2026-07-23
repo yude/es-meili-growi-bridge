@@ -8,3 +8,4 @@ data:
   MEILISEARCH_URL: "http://meilisearch:7700"
   LISTEN_ADDR: ":9200"
   LOG_LEVEL: "info"
+  # MEILISEARCH_INDEX: "growi"  # 全ES indexをこの1つのMeilisearch indexに集約する場合

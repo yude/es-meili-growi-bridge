@@ -87,3 +87,10 @@ func resolveIndex(h *Handlers, index string) string {
 	}
 	return index
 }
+
+func meiliIndex(h *Handlers, esIndex string) string {
+	if h.cfg.MeilisearchIndex != "" {
+		return h.cfg.MeilisearchIndex
+	}
+	return esIndex
+}

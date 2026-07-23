@@ -6,18 +6,20 @@ import (
 )
 
 type Config struct {
-	MeilisearchURL  string
+	MeilisearchURL    string
 	MeilisearchAPIKey string
-	ListenAddr      string
-	LogLevel        string
+	MeilisearchIndex  string
+	ListenAddr        string
+	LogLevel          string
 }
 
 func Load() *Config {
 	return &Config{
-		MeilisearchURL:   getEnv("MEILISEARCH_URL", "http://localhost:7700"),
+		MeilisearchURL:    getEnv("MEILISEARCH_URL", "http://localhost:7700"),
 		MeilisearchAPIKey: getEnv("MEILISEARCH_API_KEY", ""),
-		ListenAddr:       getEnv("LISTEN_ADDR", ":9200"),
-		LogLevel:         getEnv("LOG_LEVEL", "info"),
+		MeilisearchIndex:  getEnv("MEILISEARCH_INDEX", ""),
+		ListenAddr:        getEnv("LISTEN_ADDR", ":9200"),
+		LogLevel:          getEnv("LOG_LEVEL", "info"),
 	}
 }
 

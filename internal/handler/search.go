@@ -10,7 +10,7 @@ import (
 
 func (h *Handlers) Search(w http.ResponseWriter, r *http.Request) {
 	index := r.PathValue("index")
-	actualIndex := resolveIndex(h, index)
+	actualIndex := meiliIndex(h, resolveIndex(h, index))
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

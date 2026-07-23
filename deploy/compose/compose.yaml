@@ -23,6 +23,7 @@ services:
       MEILISEARCH_API_KEY: "${MEILISEARCH_API_KEY:-}"
       LISTEN_ADDR: ":9200"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
+      MEILISEARCH_INDEX: "${MEILISEARCH_INDEX:-}"
     depends_on:
       meilisearch:
         condition: service_healthy

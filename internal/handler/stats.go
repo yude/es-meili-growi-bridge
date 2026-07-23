@@ -7,7 +7,8 @@ import (
 )
 
 func (h *Handlers) IndexStats(w http.ResponseWriter, r *http.Request) {
-	index := r.PathValue("index")
+	esIndex := r.PathValue("index")
+	index := meiliIndex(h, esIndex)
 
 	stats, err := h.meiliClient.GetIndexStats(index)
 	if err != nil {
@@ -16,7 +17,7 @@ func (h *Handlers) IndexStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	esStats := elasticsearch.IndexStats{
-		UUID: index,
+		UUID: esIndex,
 		Primaries: elasticsearch.IndexPrimariesStats{
 			Docs:     elasticsearch.DocsStats{Count: stats.NumberOfDocuments, Deleted: 0},
 			Store:    elasticsearch.StoreStats{SizeInBytes: 0},
@@ -40,7 +41,7 @@ func (h *Handlers) IndexStats(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		Indices: map[string]elasticsearch.IndexStats{
-			index: esStats,
+			esIndex: esStats,
 		},
 	}
 

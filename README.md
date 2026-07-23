@@ -115,6 +115,7 @@ export LISTEN_ADDR=:9200
 | `MEILISEARCH_API_KEY` | `""` | Meilisearch API Key |
 | `LISTEN_ADDR` | `:9200` | サーバの listen アドレス |
 | `LOG_LEVEL` | `info` | ログレベル |
+| `MEILISEARCH_INDEX` | `""` | 指定時は全ES index名をこの1つのMeilisearch indexに集約 |
 
 ## CI/CD (GitHub Actions)
 

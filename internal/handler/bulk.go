@@ -34,11 +34,12 @@ func (h *Handlers) Bulk(w http.ResponseWriter, r *http.Request) {
 	deletedCount := 0
 
 	if len(indexDocs) > 0 {
-		meiliIndex := resolveIndex(h, indexName)
-		if meiliIndex == "" {
-			meiliIndex = indexName
+		meiliIdx := resolveIndex(h, indexName)
+		if meiliIdx == "" {
+			meiliIdx = indexName
 		}
-		if err := h.meiliClient.AddDocuments(meiliIndex, indexDocs); err != nil {
+		meiliIdx = meiliIndex(h, meiliIdx)
+		if err := h.meiliClient.AddDocuments(meiliIdx, indexDocs); err != nil {
 			writeError(w, elasticsearch.NewBadRequest("bulk index error: "+err.Error()))
 			return
 		}
@@ -46,11 +47,12 @@ func (h *Handlers) Bulk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(deleteIDs) > 0 {
-		meiliIndex := resolveIndex(h, indexName)
-		if meiliIndex == "" {
-			meiliIndex = indexName
+		meiliIdx := resolveIndex(h, indexName)
+		if meiliIdx == "" {
+			meiliIdx = indexName
 		}
-		if err := h.meiliClient.DeleteDocuments(meiliIndex, deleteIDs); err != nil {
+		meiliIdx = meiliIndex(h, meiliIdx)
+		if err := h.meiliClient.DeleteDocuments(meiliIdx, deleteIDs); err != nil {
 			writeError(w, elasticsearch.NewBadRequest("bulk delete error: "+err.Error()))
 			return
 		}
