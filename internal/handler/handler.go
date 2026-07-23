@@ -24,7 +24,7 @@ type Handlers struct {
 }
 
 func NewHandlers(cfg *config.Config, meiliClient *meilisearch.Client) *Handlers {
-	return &Handlers{
+	h := &Handlers{
 		meiliClient: meiliClient,
 		cfg:         cfg,
 		aliasStore:  NewAliasStore(),
@@ -34,6 +34,23 @@ func NewHandlers(cfg *config.Config, meiliClient *meilisearch.Client) *Handlers 
 		responseTrans: translator.NewResponseTranslator(),
 
 		indexMappingStore: make(map[string]map[string]interface{}),
+	}
+
+	h.initAliasStore()
+
+	return h
+}
+
+func (h *Handlers) initAliasStore() {
+	indexes, err := h.meiliClient.ListIndexes()
+	if err != nil {
+		log.Printf("[init] failed to list Meilisearch indexes: %v", err)
+		return
+	}
+	for _, idx := range indexes {
+		aliasName := idx.UID + "-alias"
+		h.aliasStore.PutAlias(idx.UID, aliasName)
+		log.Printf("[init] restored alias: %s -> %s", aliasName, idx.UID)
 	}
 }
 
