@@ -21,7 +21,18 @@ func (t *searchTranslator) ToMeilisearchParams(req *es.SearchRequest, indexName 
 	}
 
 	if req.Source != nil {
-		params.AttributesToRetrieve = parseSourceFields(req.Source)
+		fields := parseSourceFields(req.Source)
+		hasID := false
+		for _, f := range fields {
+			if f == "id" {
+				hasID = true
+				break
+			}
+		}
+		if !hasID {
+			fields = append(fields, "id")
+		}
+		params.AttributesToRetrieve = fields
 	}
 
 	t.translateSort(req.Sort, params)
