@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"es-meili-growi-bridge/internal/elasticsearch"
@@ -25,12 +26,16 @@ func (h *Handlers) Search(w http.ResponseWriter, r *http.Request) {
 
 	var req elasticsearch.SearchRequest
 	if err := json.Unmarshal(body, &req); err != nil {
+		log.Printf("[search] invalid JSON for index=%s body=%s err=%s", actualIndex, string(body), err.Error())
 		writeError(w, elasticsearch.NewBadRequest("invalid JSON: "+err.Error()))
 		return
 	}
 
+	log.Printf("[search] index=%s body=%s", actualIndex, string(body))
+
 	meiliParams, err := h.searchTrans.ToMeilisearchParams(&req, actualIndex)
 	if err != nil {
+		log.Printf("[search] translation error for index=%s err=%s", actualIndex, err.Error())
 		writeError(w, elasticsearch.NewBadRequest("translation error: "+err.Error()))
 		return
 	}
@@ -41,6 +46,7 @@ func (h *Handlers) Search(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.meiliClient.Search(actualIndex, meiliParams)
 	if err != nil {
+		log.Printf("[search] search error for index=%s err=%s", actualIndex, err.Error())
 		writeError(w, elasticsearch.NewBadRequest("search error: "+err.Error()))
 		return
 	}
