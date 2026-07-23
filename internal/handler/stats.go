@@ -2,47 +2,55 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 
 	"es-meili-growi-bridge/internal/elasticsearch"
+	"es-meili-growi-bridge/internal/meilisearch"
 )
 
 func (h *Handlers) IndexStats(w http.ResponseWriter, r *http.Request) {
-	esIndex := r.PathValue("index")
-	index := meiliIndex(h, esIndex)
+	esIndices := strings.Split(r.PathValue("index"), ",")
 
-	stats, err := h.meiliClient.GetIndexStats(index)
-	if err != nil {
-		writeError(w, elasticsearch.NewNotFound(index))
-		return
-	}
+	indices := make(map[string]elasticsearch.IndexStats, len(esIndices))
+	var totalDocs int
+	var meiliStats *meilisearch.IndexStats
 
-	esStats := elasticsearch.IndexStats{
-		UUID: esIndex,
-		Primaries: elasticsearch.IndexPrimariesStats{
-			Docs:     elasticsearch.DocsStats{Count: stats.NumberOfDocuments, Deleted: 0},
-			Store:    elasticsearch.StoreStats{SizeInBytes: 0},
-			Indexing: elasticsearch.IndexingStats{},
-		},
-		Total: elasticsearch.IndexPrimariesStats{
-			Docs:     elasticsearch.DocsStats{Count: stats.NumberOfDocuments, Deleted: 0},
-			Store:    elasticsearch.StoreStats{SizeInBytes: 0},
-			Indexing: elasticsearch.IndexingStats{},
-		},
+	for _, esIdx := range esIndices {
+		meiliIdx := meiliIndex(h, esIdx)
+		if meiliStats == nil {
+			s, err := h.meiliClient.GetIndexStats(meiliIdx)
+			if err != nil {
+				writeError(w, elasticsearch.NewNotFound(meiliIdx))
+				return
+			}
+			meiliStats = s
+		}
+		esStats := elasticsearch.IndexStats{
+			UUID: esIdx,
+			Primaries: elasticsearch.IndexPrimariesStats{
+				Docs:  elasticsearch.DocsStats{Count: meiliStats.NumberOfDocuments, Deleted: 0},
+				Store: elasticsearch.StoreStats{SizeInBytes: 0},
+			},
+			Total: elasticsearch.IndexPrimariesStats{
+				Docs:  elasticsearch.DocsStats{Count: meiliStats.NumberOfDocuments, Deleted: 0},
+				Store: elasticsearch.StoreStats{SizeInBytes: 0},
+			},
+		}
+		totalDocs += int(meiliStats.NumberOfDocuments)
+		indices[esIdx] = esStats
 	}
 
 	resp := &elasticsearch.IndicesStatsResponse{
-		Shards:  elasticsearch.DefaultShards(),
+		Shards: elasticsearch.DefaultShards(),
 		All: map[string]interface{}{
-			"primaries": map[string]interface{}{
-				"docs": elasticsearch.DocsStats{Count: stats.NumberOfDocuments, Deleted: 0},
+			"primaries": elasticsearch.IndexPrimariesStats{
+				Docs: elasticsearch.DocsStats{Count: totalDocs, Deleted: 0},
 			},
-			"total": map[string]interface{}{
-				"docs": elasticsearch.DocsStats{Count: stats.NumberOfDocuments, Deleted: 0},
+			"total": elasticsearch.IndexPrimariesStats{
+				Docs: elasticsearch.DocsStats{Count: totalDocs, Deleted: 0},
 			},
 		},
-		Indices: map[string]elasticsearch.IndexStats{
-			esIndex: esStats,
-		},
+		Indices: indices,
 	}
 
 	writeJSON(w, http.StatusOK, resp)

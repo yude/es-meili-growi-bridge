@@ -4,17 +4,18 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"es-meili-growi-bridge/internal/elasticsearch"
 )
 
 func (h *Handlers) GetAliases(w http.ResponseWriter, r *http.Request) {
-	index := r.PathValue("index")
+	indices := strings.Split(r.PathValue("index"), ",")
 
-	aliases := h.aliasStore.GetIndexAliases(index)
-
-	resp := map[string]*elasticsearch.IndexAliasInfo{
-		index: {Aliases: aliases},
+	resp := make(map[string]*elasticsearch.IndexAliasInfo, len(indices))
+	for _, idx := range indices {
+		aliases := h.aliasStore.GetIndexAliases(idx)
+		resp[idx] = &elasticsearch.IndexAliasInfo{Aliases: aliases}
 	}
 
 	writeJSON(w, http.StatusOK, resp)
