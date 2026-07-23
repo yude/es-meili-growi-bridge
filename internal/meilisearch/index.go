@@ -63,11 +63,13 @@ func (c *Client) ListIndexes() ([]IndexInfo, error) {
 		return nil, err
 	}
 
-	var indexes []IndexInfo
-	if err := jsonUnmarshal(resp, &indexes); err != nil {
+	var wrapper struct {
+		Results []IndexInfo `json:"results"`
+	}
+	if err := jsonUnmarshal(resp, &wrapper); err != nil {
 		return nil, err
 	}
-	return indexes, nil
+	return wrapper.Results, nil
 }
 
 func (c *Client) UpdateFilterableAttributes(uid string, attributes []string) error {
