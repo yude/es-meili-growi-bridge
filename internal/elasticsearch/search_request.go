@@ -1,13 +1,42 @@
 package elasticsearch
 
+import "encoding/json"
+
 type SearchRequest struct {
-	Index          string                 `json:"-"`
-	Query          map[string]interface{} `json:"query"`
-	From           int                    `json:"from,omitempty"`
-	Size           int                    `json:"size,omitempty"`
-	Sort           []map[string]interface{} `json:"sort,omitempty"`
-	Source         interface{}            `json:"_source,omitempty"`
-	Highlight      map[string]interface{} `json:"highlight,omitempty"`
+	Index     string                 `json:"-"`
+	Query     map[string]interface{} `json:"query"`
+	From      int                    `json:"from,omitempty"`
+	Size      int                    `json:"size,omitempty"`
+	Sort      []map[string]interface{} `json:"-"`
+	Source    interface{}            `json:"_source,omitempty"`
+	Highlight map[string]interface{} `json:"highlight,omitempty"`
+	RawSort   json.RawMessage        `json:"sort,omitempty"`
+}
+
+func (r *SearchRequest) UnmarshalJSON(data []byte) error {
+	type Alias SearchRequest
+	aux := &struct {
+		Sort json.RawMessage `json:"sort,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(r),
+	}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	if len(aux.Sort) == 0 {
+		return nil
+	}
+	var arr []map[string]interface{}
+	if err := json.Unmarshal(aux.Sort, &arr); err != nil {
+		var obj map[string]interface{}
+		if err2 := json.Unmarshal(aux.Sort, &obj); err2 != nil {
+			return err
+		}
+		arr = []map[string]interface{}{obj}
+	}
+	r.Sort = arr
+	return nil
 }
 
 type QueryType string
