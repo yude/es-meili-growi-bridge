@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"es-meili-growi-bridge/internal/elasticsearch"
@@ -60,6 +61,14 @@ func (h *Handlers) CreateIndex(w http.ResponseWriter, r *http.Request) {
 		}
 		writeError(w, elasticsearch.NewBadRequest("failed to create index: "+err.Error()))
 		return
+	}
+
+	filterable := []string{"path", "grant", "granted_users", "granted_groups", "username", "last_update_username", "tag_names", "created_at", "updated_at", "comment_count", "bookmark_count", "like_count"}
+	if err := h.meiliClient.UpdateFilterableAttributes(index, filterable); err != nil {
+		log.Printf("failed to set filterable attributes: %v", err)
+	}
+	if err := h.meiliClient.UpdateSortableAttributes(index, []string{"created_at", "updated_at", "comment_count", "bookmark_count", "like_count"}); err != nil {
+		log.Printf("failed to set sortable attributes: %v", err)
 	}
 
 	h.aliasStore.PutAlias(esIndex, esIndex+"-alias")
