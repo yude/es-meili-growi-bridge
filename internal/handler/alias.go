@@ -25,10 +25,12 @@ func (h *Handlers) AliasExists(w http.ResponseWriter, r *http.Request) {
 	alias := r.PathValue("name")
 
 	if h.aliasStore.ExistsAlias(alias, index) {
+		setProductHeader(w)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
+	setProductHeader(w)
 	w.WriteHeader(http.StatusNotFound)
 }
 
